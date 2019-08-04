@@ -9,7 +9,7 @@ import {
   Platform
 } from 'react-native';
 import HomeScreen from './Components/HomeScreen';
-import {expenseKeyWords, moneySymbol} from './Constants/appConstants';
+import {expenseKeyWords, moneySymbol, ignoreExpenseKeyWords} from './Constants/appConstants';
 
 async function requestSmsPermission() {
   try {
@@ -65,10 +65,13 @@ export default class App extends Component {
                     const bool = (list.address.length === 8 || list.address.length === 9) && expenseKeyWords.some(word => {
                       const strRegExPattern = '\\b'+word+'\\b';
                       return list.body.toLowerCase().match(new RegExp(strRegExPattern,'g'));
+                    }) && !ignoreExpenseKeyWords.some((ignoreWord) => {
+                      const strRegExPattern = '\\b'+ignoreWord+'\\b';
+                      return list.body.toLowerCase().match(new RegExp(strRegExPattern,'g'));
                     });
                     let num = 0;
                     bool && moneySymbol.some((symbol) => {
-                      num = Number(list.body.toLowerCase().split(symbol)[1] && list.body.toLowerCase().split(symbol)[1].replace(",", "").match(/\d+/)[0] || 0);
+                      num = Number(list.body.toLowerCase().split(symbol)[1] && list.body.toLowerCase().split(symbol)[1].replace(",", "").match(/\d+(\.?\d+)/)[0] || 0);
                       return num;
                     });
                     // let num = bool && list.body.match(/\d+.\d+/) && Number(list.body.match(/\d+.\d+/)[0]) || 0;
@@ -76,7 +79,7 @@ export default class App extends Component {
                     num && finalList.push(list);
                     return acc = acc + num;
                 }, 0);
-                this.setState({ count: count.toString(), smsList: finalList, expense });
+                this.setState({ count: count.toString(), smsList: finalList, expense: Math.round(expense) });
             });
             this.setState({isReadSmsPermissionGranted: bool});
       });
